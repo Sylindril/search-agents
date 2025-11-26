@@ -2,11 +2,14 @@
 import os
 
 DATASET = os.environ["DATASET"]
-if DATASET not in ["webarena", "visualwebarena"]:
-    raise ValueError("Please set the DATASET environment variable, the possible options are `webarena`, `visualwebarena` and `miniwob++`")
+
+# OMTW - real websites (no VWA setup needed)
+if DATASET == "omtw":
+    REDDIT = SHOPPING = WIKIPEDIA = HOMEPAGE = CLASSIFIEDS = CLASSIFIEDS_RESET_TOKEN = ""
+    URL_MAPPINGS = {}
 
 # WebArena
-if DATASET == "webarena":
+elif DATASET == "webarena":
     REDDIT = os.environ.get("REDDIT", "")
     SHOPPING = os.environ.get("SHOPPING", "")
     SHOPPING_ADMIN = os.environ.get("SHOPPING_ADMIN", "")
@@ -76,9 +79,9 @@ elif DATASET == "visualwebarena":
         HOMEPAGE: "http://homepage.com",
         CLASSIFIEDS: "http://classifieds.com",
     }
-    
+
 else:
-    raise ValueError(f"Dataset not implemented: {DATASET}")
+    raise ValueError(f"Dataset not implemented: {DATASET}. Options: webarena, visualwebarena, omtw")
 
 
 ACCOUNTS = {

@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "traderjoes"
+  ],
+  "task_id": 0,
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "https://www.traderjoes.com/",
+  "geolocation": null,
+  "intent_template": "Find the store location and hours of the closest Trader Joe's to zip code {{zip_code}} and set it as my home store.",
+  "intent": "Find the store location and hours of the closest Trader Joe's to zip code 90028 and set it as my home store.",
+  "image": null,
+  "instantiation_dict": {
+    "zip_code": "90028"
+  },
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "string_match"
+    ],
+    "reference_answers": {
+      "must_include": [
+        "Hollywood",
+        "206"
+      ]
+    },
+    "reference_url": "",
+    "program_html": [],
+    "url_note": "Checks for the specific store name (Hollywood) associated with zip 90028"
+  },
+  "reasoning_difficulty": "medium",
+  "visual_difficulty": "medium",
+  "overall_difficulty": "medium",
+  "comments": "Original Task ID: b7258ee05d75e6c50673a59914db412e_110325",
+  "intent_template_id": 0
+}

@@ -42,6 +42,14 @@ elif DATASET == "visualwebarena":
     ]
     EXACT_MATCH = [True, True, True]
     KEYWORDS = ["", "Delete", "My listings"]
+
+elif DATASET == "omtw":
+    # OMTW uses real websites - no auto-login needed
+    SITES = []
+    URLS = []
+    EXACT_MATCH = []
+    KEYWORDS = []
+
 else:
     raise ValueError(f"Dataset not implemented: {DATASET}")
 

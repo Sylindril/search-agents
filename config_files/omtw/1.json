@@ -1,0 +1,29 @@
+{
+  "sites": [
+    "flightaware"
+  ],
+  "task_id": 1,
+  "require_login": false,
+  "storage_state": null,
+  "start_url": "https://www.flightaware.com/",
+  "geolocation": null,
+  "intent_template": "Compare available plans for the AeroAPI on Flightaware.",
+  "intent": "Compare available plans for the AeroAPI on Flightaware.",
+  "image": null,
+  "instantiation_dict": {},
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "url_match"
+    ],
+    "reference_answers": null,
+    "reference_url": "https://www.flightaware.com/commercial/aeroapi/pricing",
+    "program_html": [],
+    "url_note": "Target is the pricing/comparison page"
+  },
+  "reasoning_difficulty": "easy",
+  "visual_difficulty": "easy",
+  "overall_difficulty": "easy",
+  "comments": "Original Task ID: ade4c09ad3fdb1607209750924cd232f",
+  "intent_template_id": 1
+}

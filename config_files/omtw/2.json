@@ -1,0 +1,29 @@
+{
+  "sites": [
+    "discogs"
+  ],
+  "task_id": 2,
+  "require_login": true,
+  "storage_state": null,
+  "start_url": "https://www.discogs.com/",
+  "geolocation": null,
+  "intent_template": "Open the page with an overview of the submission of releases on Discogs.",
+  "intent": "Open the page with an overview of the submission of releases on Discogs.",
+  "image": null,
+  "instantiation_dict": {},
+  "require_reset": false,
+  "eval": {
+    "eval_types": [
+      "url_match"
+    ],
+    "reference_answers": null,
+    "reference_url": "https://www.discogs.com/release/add",
+    "program_html": [],
+    "url_note": "Target is the submission start page"
+  },
+  "reasoning_difficulty": "medium",
+  "visual_difficulty": "medium",
+  "overall_difficulty": "medium",
+  "comments": "Original Task ID: fb7b4f784cfde003e2548fdf4e8d6b4f",
+  "intent_template_id": 2
+}
