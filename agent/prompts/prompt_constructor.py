@@ -295,9 +295,10 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         keywords = self.instruction["meta_data"]["keywords"]
         state_info: StateInfo = trajectory[-1]  # type: ignore[assignment]
 
-        obs = state_info["observation"][self.obs_modality]
+        # Get text observation if available (may be empty for image-only mode)
+        obs = state_info["observation"].get(self.obs_modality, "")
         max_obs_length = self.lm_config.gen_config["max_obs_length"]
-        if max_obs_length:
+        if obs and max_obs_length:
             if self.lm_config.provider == "google":
                 print("NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length.")
                 obs = obs[:max_obs_length]
@@ -307,12 +308,16 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         page = state_info["info"]["page"]
         url = page.url
         previous_action_str = meta_data["action_history"][-1]
-        current = template.format(
-            objective=intent,
-            url=self.map_url_to_real(url),
-            observation=obs,
-            previous_action=previous_action_str,
-        )
+        
+        # Build format kwargs based on what's in the template
+        format_kwargs = {
+            "objective": intent,
+            "url": self.map_url_to_real(url),
+            "previous_action": previous_action_str,
+        }
+        if "{observation}" in template:
+            format_kwargs["observation"] = obs
+        current = template.format(**format_kwargs)
 
         assert all([f"{{k}}" not in current for k in keywords])
 
@@ -340,26 +345,36 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                     }
                 ]
                 for (x, y, z) in examples:
-                    example_img = Image.open(z)
-                    message.append(
-                        {
-                            "role": "user" if "gpt-4o" in self.lm_config.model else "system",
-                            "name": "example_user",
-                            "content": [
-                                {"type": "text", "text": x},
-                                {
-                                    "type": "text",
-                                    "text": "IMAGES: (1) current page screenshot",
-                                },
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": pil_to_b64(example_img)
+                    # Handle examples with or without images
+                    if z and z.strip():  # If image path is provided
+                        example_img = Image.open(z)
+                        message.append(
+                            {
+                                "role": "user" if "gpt-4o" in self.lm_config.model else "system",
+                                "name": "example_user",
+                                "content": [
+                                    {"type": "text", "text": x},
+                                    {
+                                        "type": "text",
+                                        "text": "IMAGES: (1) current page screenshot",
                                     },
-                                },
-                            ],
-                        }
-                    )
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": pil_to_b64(example_img)
+                                        },
+                                    },
+                                ],
+                            }
+                        )
+                    else:  # No image for this example (e.g., coord mode)
+                        message.append(
+                            {
+                                "role": "user" if "gpt-4o" in self.lm_config.model else "system",
+                                "name": "example_user",
+                                "content": [{"type": "text", "text": x}],
+                            }
+                        )
                     message.append(
                         {
                             "role": "user" if "gpt-4o" in self.lm_config.model else "system",

@@ -1170,7 +1170,10 @@ def execute_action(
             execute_key_press(keys, page)
 
         case ActionTypes.MOUSE_CLICK:
-            execute_mouse_click(action["coords"][0], action["coords"][1], page)
+            coords = action["coords"]
+            pixel_coords = action.get("pixel_coords", [int(coords[0]*1280), int(coords[1]*2048)])
+            print(f"  >> EXEC CLICK: ({pixel_coords[0]}, {pixel_coords[1]})")
+            execute_mouse_click(coords[0], coords[1], page)
         case ActionTypes.CLEAR:
             element_id = action["element_id"]
             element_center = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
@@ -1226,7 +1229,19 @@ def execute_action(
                     "No proper locator found for hover action"
                 )
         case ActionTypes.TYPE:
-            if action["element_id"]:
+            if "coords" in action and action["coords"] is not None:
+                # Coordinate-based type: click at coords then type string directly
+                import time as _time
+                coords = action["coords"]
+                pixel_coords = action.get("pixel_coords", [int(coords[0]*1280), int(coords[1]*2048)])
+                text = action["text"] if isinstance(action["text"], str) else "".join([_id2key[k] for k in action["text"]])
+                print(f"  >> EXEC TYPE: click ({pixel_coords[0]}, {pixel_coords[1]}) then type '{text}'")
+                execute_mouse_click(coords[0], coords[1], page)
+                _time.sleep(0.3)  # Wait for focus
+                page.keyboard.type(text)
+                page.keyboard.press("Enter")
+                print(f"  >> EXEC TYPE: Done")
+            elif action["element_id"]:
                 element_id = action["element_id"]
                 if "element_center" not in action:
                     action["element_center"] = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]

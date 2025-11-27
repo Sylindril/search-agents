@@ -12,10 +12,85 @@ from browser_env import Trajectory
 from browser_env.actions import (
     Action,
     ActionParsingError,
+    ActionTypes,
     create_id_based_action,
     create_none_action,
     create_playwright_action,
+    create_mouse_click_action,
+    create_mouse_hover_action,
+    create_scroll_action,
+    create_key_press_action,
+    create_stop_action,
+    create_goto_url_action,
 )
+import re as _re
+
+def create_coord_based_action(response: str, viewport_width: int = 1280, viewport_height: int = 2048) -> Action:
+    """Parse coordinate-based action from LLM response for raw image mode.
+    
+    LLM outputs pixel coordinates which are normalized to 0-1 range for execution.
+    """
+    response = response.strip()
+    
+    patterns = [
+        (r'click\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]', 'click'),
+        (r'type\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]\s*\[([^\]]+)\]', 'type'),
+        (r'scroll\s*\[\s*(up|down)\s*\]', 'scroll'),
+        (r'press\s*\[\s*([^\]]+)\s*\]', 'press'),
+        (r'stop\s*\[\s*([^\]]*)\s*\]', 'stop'),
+        (r'goto\s*\[\s*([^\]]+)\s*\]', 'goto'),
+        (r'hover\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]', 'hover'),
+    ]
+    
+    for pattern, action_type in patterns:
+        match = _re.search(pattern, response, _re.IGNORECASE)
+        if match:
+            if action_type == 'click':
+                px, py = int(match.group(1)), int(match.group(2))
+                norm_x = px / viewport_width
+                norm_y = py / viewport_height
+                action = create_mouse_click_action(norm_x, norm_y)
+                action["pixel_coords"] = [px, py]
+            elif action_type == 'type':
+                px, py = int(match.group(1)), int(match.group(2))
+                text = match.group(3)
+                norm_x = px / viewport_width
+                norm_y = py / viewport_height
+                action = {
+                    "action_type": ActionTypes.TYPE,
+                    "coords": [norm_x, norm_y],
+                    "pixel_coords": [px, py],
+                    "text": text,
+                    "element_id": "",
+                    "element_role": 0,
+                    "element_name": "",
+                    "pw_code": "",
+                }
+            elif action_type == 'scroll':
+                direction = match.group(1).lower()
+                action = create_scroll_action(direction)
+            elif action_type == 'press':
+                key_combo = match.group(1)
+                action = create_key_press_action(key_combo)
+            elif action_type == 'stop':
+                answer = match.group(1)
+                action = create_stop_action(answer)
+            elif action_type == 'goto':
+                url = match.group(1)
+                action = create_goto_url_action(url)
+            elif action_type == 'hover':
+                px, py = int(match.group(1)), int(match.group(2))
+                norm_x = px / viewport_width
+                norm_y = py / viewport_height
+                action = create_mouse_hover_action(norm_x, norm_y)
+                action["pixel_coords"] = [px, py]
+            
+            action["raw_prediction"] = response
+            return action
+    
+    action = create_none_action()
+    action["raw_prediction"] = response
+    return action
 from browser_env.utils import Observation, StateInfo
 from llms import (
     call_llm,
@@ -176,20 +251,24 @@ class PromptAgent(Agent):
                 print(f'Agent: {response}', flush=True)
             n += 1
             try:
-                parsed_response = self.prompt_constructor.extract_action(
-                    response
-                )
-                if self.action_set_tag == "id_accessibility_tree":
-                    action = create_id_based_action(parsed_response)
-                elif self.action_set_tag == "playwright":
-                    action = create_playwright_action(parsed_response)
-                elif self.action_set_tag == "som":
-                    action = create_id_based_action(parsed_response)
+                if self.action_set_tag == "coord":
+                    # For coord action_set_tag, parse directly from raw response
+                    action = create_coord_based_action(response)
                 else:
-                    raise ValueError(
-                        f"Unknown action type {self.action_set_tag}"
+                    parsed_response = self.prompt_constructor.extract_action(
+                        response
                     )
-                action["raw_prediction"] = response
+                    if self.action_set_tag == "id_accessibility_tree":
+                        action = create_id_based_action(parsed_response)
+                    elif self.action_set_tag == "playwright":
+                        action = create_playwright_action(parsed_response)
+                    elif self.action_set_tag == "som":
+                        action = create_id_based_action(parsed_response)
+                    else:
+                        raise ValueError(
+                            f"Unknown action type {self.action_set_tag}"
+                        )
+                    action["raw_prediction"] = response
                 break
             except ActionParsingError as e:
                 if n >= lm_config.gen_config["max_retry"]:
@@ -286,25 +365,36 @@ class SearchAgent(Agent):
             for response in responses:
                 response = f"{force_prefix}{response}"
                 try:
-                    parsed_response = self.prompt_constructor.extract_action(
-                        response
-                    )
-                    if parsed_response in all_actions:
-                        parsed_actions_count[parsed_response] += 1
+                    if self.action_set_tag == "coord":
+                        # For coord action_set_tag, parse directly from raw response
+                        action = create_coord_based_action(response)
+                        parsed_response = action.get("raw_prediction", response)
+                        if action["action_type"] != ActionTypes.NONE:
+                            if parsed_response in all_actions:
+                                parsed_actions_count[parsed_response] += 1
+                            else:
+                                parsed_actions_count[parsed_response] = 1
+                                all_actions[parsed_response] = action
                     else:
-                        if self.action_set_tag == "id_accessibility_tree":
-                            action = create_id_based_action(parsed_response)
-                        elif self.action_set_tag == "playwright":
-                            action = create_playwright_action(parsed_response)
-                        elif self.action_set_tag == "som":
-                            action = create_id_based_action(parsed_response)
+                        parsed_response = self.prompt_constructor.extract_action(
+                            response
+                        )
+                        if parsed_response in all_actions:
+                            parsed_actions_count[parsed_response] += 1
                         else:
-                            raise ValueError(
-                                f"Unknown action type {self.action_set_tag}"
-                            )
-                        parsed_actions_count[parsed_response] = 1
-                        action["raw_prediction"] = response
-                        all_actions[parsed_response] = action
+                            if self.action_set_tag == "id_accessibility_tree":
+                                action = create_id_based_action(parsed_response)
+                            elif self.action_set_tag == "playwright":
+                                action = create_playwright_action(parsed_response)
+                            elif self.action_set_tag == "som":
+                                action = create_id_based_action(parsed_response)
+                            else:
+                                raise ValueError(
+                                    f"Unknown action type {self.action_set_tag}"
+                                )
+                            parsed_actions_count[parsed_response] = 1
+                            action["raw_prediction"] = response
+                            all_actions[parsed_response] = action
                 except ActionParsingError as e:
                     continue
             

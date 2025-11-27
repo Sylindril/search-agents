@@ -71,6 +71,12 @@ def get_render_action(
 
         case "playwright":
             action_str = action["pw_code"]
+        case "coord":
+            # For coordinate-based actions
+            action_str = f"<div class='raw_parsed_prediction' style='background-color:grey'><pre>{action.get('raw_prediction', 'N/A')}</pre></div>"
+            action_str += f"<div class='action_object' style='background-color:grey'><pre>{repr(action)}</pre></div>"
+            if 'coords' in action:
+                action_str += f"<div class='parsed_action' style='background-color:yellow'><pre>Action at coords: {action['coords']}</pre></div>"
         case _:
             raise ValueError(
                 f"Unknown action type {action['action_type'], action_set_tag}"
@@ -147,6 +153,10 @@ def get_action_description(
 
         case "playwright":
             action_str = action["pw_code"]
+
+        case "coord":
+            # For coordinate-based actions, just use the raw prediction
+            action_str = action.get("raw_prediction", str(action))
 
         case _:
             raise ValueError(f"Unknown action type {action['action_type']}")
