@@ -1,0 +1,10 @@
+[Config file]: config_files/omtw/0.json
+[Unhandled Error] KeyError('answer')
+Traceback (most recent call last):
+  File "/home/adityaku/search-agents/run.py", line 664, in test
+    score = evaluator(
+  File "/home/adityaku/search-agents/evaluation_harness/evaluators.py", line 601, in __call__
+    cur_score = evaluator(trajectory, config_file, page)
+  File "/home/adityaku/search-agents/evaluation_harness/evaluators.py", line 202, in __call__
+    pred = self.clean_answer(last_action["answer"])
+KeyError: 'answer'

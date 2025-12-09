@@ -5,7 +5,7 @@
 export DATASET=omtw
 
 # Point to local OpenCUA server
-export OPENAI_API_BASE=http://localhost:8000/v1
+export OPENAI_API_BASE=http://localhost:7999/v1
 # Set a dummy key (not used with local server)
 export OPENAI_API_KEY=EMPTY
 
@@ -47,7 +47,8 @@ python run.py \
     --max_obs_length 3840 \
     --top_p 0.95 \
     --temperature 1.0 \
-    --max_steps $max_steps
+    --max_steps $max_steps \
+    --verbose
 
 echo "=== Evaluation Complete ==="
 

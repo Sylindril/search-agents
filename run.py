@@ -188,6 +188,8 @@ def config() -> argparse.Namespace:
 
     # logging related
     parser.add_argument("--result_dir", type=str, default="")
+    parser.add_argument("--verbose", action="store_true",
+                       help="Enable verbose logging of agent and value function")
     args = parser.parse_args()
 
     # check the whether the action space is compatible with the observation space
@@ -410,7 +412,8 @@ def test(
                             intent,
                             images=images,
                             meta_data=meta_data,
-                            branching_factor=branching_factor
+                            branching_factor=branching_factor,
+                            output_response=args.verbose
                         )
                     except ValueError as e:
                         # get the error message
@@ -468,14 +471,16 @@ def test(
                                     screenshots=last_screenshots[-(args.max_depth+1):] + [obs_img], actions=temp_action_history,
                                     current_url=env.page.url, last_reasoning=a["raw_prediction"],
                                     intent=intent, models=["gpt-4o-2024-05-13"],
-                                    intent_images=images if len(images) > 0 else None)
+                                    intent_images=images if len(images) > 0 else None,
+                                    should_log=args.verbose)
                             elif args.value_function == "local":
                                 # Use the model specified via --model for local value function
                                 score = value_function.evaluate_success(
                                     screenshots=last_screenshots[-(args.max_depth+1):] + [obs_img], actions=temp_action_history,
                                     current_url=env.page.url, last_reasoning=a["raw_prediction"],
                                     intent=intent, models=[args.model],
-                                    intent_images=images if len(images) > 0 else None)
+                                    intent_images=images if len(images) > 0 else None,
+                                    should_log=args.verbose)
                             else:
                                 raise NotImplementedError(f"Value function {args.value_function} not implemented")
                         except Exception as e:
@@ -496,7 +501,8 @@ def test(
                                         intent,
                                         images=images,
                                         meta_data=meta_data,
-                                        branching_factor=branching_factor
+                                        branching_factor=branching_factor,
+                                        output_response=args.verbose
                                     )
                                 except ValueError as e:
                                     # get the error message

@@ -31,15 +31,20 @@ def create_coord_based_action(response: str, viewport_width: int = 1280, viewpor
     LLM outputs pixel coordinates which are normalized to 0-1 range for execution.
     """
     response = response.strip()
+    print(f"[DEBUG] Model Response: {response}")
     
     patterns = [
-        (r'click\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]', 'click'),
-        (r'type\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]\s*\[([^\]]+)\]', 'type'),
+        # Support both "click [640, 400]" and "click [x=640, y=400]" formats
+        (r'click\s*\[\s*(?:x\s*=\s*)?(\d+)\s*,\s*(?:y\s*=\s*)?(\d+)\s*\]', 'click'),
+        (r'type\s*\[\s*(?:x\s*=\s*)?(\d+)\s*,\s*(?:y\s*=\s*)?(\d+)\s*\]\s*\[([^\]]+)\]', 'type'),
         (r'scroll\s*\[\s*(up|down)\s*\]', 'scroll'),
         (r'press\s*\[\s*([^\]]+)\s*\]', 'press'),
         (r'stop\s*\[\s*([^\]]*)\s*\]', 'stop'),
         (r'goto\s*\[\s*([^\]]+)\s*\]', 'goto'),
-        (r'hover\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]', 'hover'),
+        (r'hover\s*\[\s*(?:x\s*=\s*)?(\d+)\s*,\s*(?:y\s*=\s*)?(\d+)\s*\]', 'hover'),
+        # Also support pyautogui format as fallback
+        (r'pyautogui\.click\s*\(\s*(?:x\s*=\s*)?(\d+)\s*,\s*(?:y\s*=\s*)?(\d+)\s*\)', 'click'),
+        (r'pyautogui\.moveTo\s*\(\s*(?:x\s*=\s*)?(\d+)\s*,\s*(?:y\s*=\s*)?(\d+)\s*\)', 'hover'),
     ]
     
     for pattern, action_type in patterns:

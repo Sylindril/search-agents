@@ -11,6 +11,12 @@ class Tokenizer(object):
             if "Llama-3" in model_name:
                 assert "OPENAI_API_BASE" in os.environ
                 self.tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
+            elif "OpenCUA-7B" in model_name:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    "xlangai/OpenCUA-7B",
+                    cache_dir="/data/user_data/adityaku/hf_cache",
+                    trust_remote_code=True
+                )
             else:
                 self.tokenizer = tiktoken.encoding_for_model(model_name)
         elif provider == "huggingface":
