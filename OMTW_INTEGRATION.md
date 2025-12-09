@@ -273,6 +273,7 @@ OPENAI_API_KEY=sk-...
 pip install "numpy<2" --force-reinstall
 pip install httpx==0.25.0 openai==1.3.5
 pip install langchain==0.2.16 langchain-community==0.2.17 langchain-core==0.2.40 langchain-openai
+pip install fastapi uvicorn
 ```
 
 ---

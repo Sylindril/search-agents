@@ -1,14 +1,19 @@
 #!/bin/bash
+# OpenCUA-7B OMTW Search Script
+# This script runs OMTW tasks using OpenCUA-7B as the action and value model
+
 export DATASET=omtw
 
-# Load API key from environment or .env file
-if [ -f .env ]; then
-    source .env
-fi
+# Point to local OpenCUA server
+export OPENAI_API_BASE=http://localhost:8000/v1
+# Set a dummy key (not used with local server)
+export OPENAI_API_KEY=EMPTY
 
-model="gpt-4o"
+# Model name (must match what's registered in the server)
+model="OpenCUA-7B"
 agent="search"  # change to "prompt" for baseline without search
-result_dir="omtw_gpt4o_search"
+result_dir="omtw_opencua_search"
+
 # Use coordinate-based prompt for raw images (no BLIP2/SoM needed)
 instruction_path="agent/prompts/jsons/p_coord_image_cot.json"
 
@@ -18,9 +23,10 @@ max_steps=5
 branching_factor=5
 vf_budget=20
 
-echo "=== Starting OMTW Evaluation ==="
+echo "=== Starting OMTW Evaluation with OpenCUA-7B ==="
 echo "Model: $model | Agent: $agent | Tasks: 0-1"
-echo "================================"
+echo "API Base: $OPENAI_API_BASE"
+echo "================================================"
 
 python run.py \
     --instruction_path $instruction_path \
@@ -31,6 +37,7 @@ python run.py \
     --max_depth $max_depth \
     --branching_factor $branching_factor \
     --vf_budget $vf_budget \
+    --value_function local \
     --result_dir $result_dir \
     --test_config_base_dir=config_files/omtw \
     --action_set_tag coord \

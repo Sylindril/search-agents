@@ -299,7 +299,7 @@ def config() -> argparse.Namespace:
     parser.add_argument("--branching_factor", type=int, default=5, help="Branching factor at each step for the search agent.")
     parser.add_argument("--search_algo", type=str, default="vf", help="Search algorithm to use", choices=["vf", "bfs", "dfs"])
     parser.add_argument("--vf_budget", type=int, default=20, help="Budget for the number of value function evaluations.")
-    parser.add_argument("--value_function", type=str, default="gpt4o", help="What value function to use.", choices=["gpt4o"])
+    parser.add_argument("--value_function", type=str, default="gpt4o", help="What value function to use.", choices=["gpt4o", "local"])
 
     # example config
     parser.add_argument("--test_idx", type=str, default=None, help="Idx to test")
@@ -630,6 +630,13 @@ def test(
                                     screenshots=last_screenshots[-(args.max_depth+1):] + [obs_img], actions=temp_action_history,
                                     current_url=env.page.url, last_reasoning=a["raw_prediction"],
                                     intent=intent, models=["gpt-4o-2024-05-13"],
+                                    intent_images=images if len(images) > 0 else None)
+                            elif args.value_function == "local":
+                                # Use the model specified via --model for local value function
+                                score = value_function.evaluate_success(
+                                    screenshots=last_screenshots[-(args.max_depth+1):] + [obs_img], actions=temp_action_history,
+                                    current_url=env.page.url, last_reasoning=a["raw_prediction"],
+                                    intent=intent, models=[args.model],
                                     intent_images=images if len(images) > 0 else None)
                             else:
                                 raise NotImplementedError(f"Value function {args.value_function} not implemented")

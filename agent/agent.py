@@ -192,7 +192,13 @@ class PromptAgent(Agent):
         self.captioning_fn = captioning_fn
 
         # Check if the model is multimodal.
-        if ("gemini" in lm_config.model or "gpt-4" in lm_config.model and "vision" in lm_config.model or "gpt-4o" in lm_config.model) and type(prompt_constructor) == MultimodalCoTPromptConstructor:
+        is_multimodal_model = (
+            "gemini" in lm_config.model.lower() or
+            ("gpt-4" in lm_config.model.lower() and "vision" in lm_config.model.lower()) or
+            "gpt-4o" in lm_config.model.lower() or
+            "opencua" in lm_config.model.lower()
+        )
+        if is_multimodal_model and type(prompt_constructor) == MultimodalCoTPromptConstructor:
             self.multimodal_inputs = True
         else:
             self.multimodal_inputs = False
@@ -299,11 +305,16 @@ class SearchAgent(Agent):
         self.captioning_fn = captioning_fn
 
         # Check if the model is multimodal.
-        if ("gemini" in lm_config.model or "gpt-4" in lm_config.model and "vision" in lm_config.model or "gpt-4o" in lm_config.model) and type(prompt_constructor) == MultimodalCoTPromptConstructor:
+        is_multimodal_model = (
+            "gemini" in lm_config.model.lower() or
+            ("gpt-4" in lm_config.model.lower() and "vision" in lm_config.model.lower()) or
+            "gpt-4o" in lm_config.model.lower() or
+            "opencua" in lm_config.model.lower()
+        )
+        if is_multimodal_model and type(prompt_constructor) == MultimodalCoTPromptConstructor:
             self.multimodal_inputs = True
         else:
             self.multimodal_inputs = False
-
 
     def set_action_set_tag(self, tag: str) -> None:
         self.action_set_tag = tag

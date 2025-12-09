@@ -1,4 +1,0 @@
-log_files/log_20251126003557_695.log
-log_files/log_20251126003855_4869.log
-log_files/log_20251126004303_2268.log
-log_files/log_20251126004829_5868.log

@@ -1167,7 +1167,9 @@ def execute_action(
             execute_scroll(direction, page)
         case ActionTypes.KEY_PRESS:
             keys = action["key_comb"]
+            print(f"  >> EXEC KEY_PRESS: {keys}")
             execute_key_press(keys, page)
+            print(f"  >> EXEC KEY_PRESS: Done")
 
         case ActionTypes.MOUSE_CLICK:
             coords = action["coords"]

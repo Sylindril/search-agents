@@ -261,12 +261,10 @@ def generate_from_openai_chat_completion(
     stop_token: str | None = None,
     num_outputs: int = 1,
 ) -> Union[str, list[str]]:
-    if "OPENAI_API_KEY" not in os.environ:
+    if "OPENAI_API_KEY" not in os.environ and "OPENAI_API_BASE" not in os.environ:
         raise ValueError(
             "OPENAI_API_KEY environment variable must be set when using OpenAI API."
         )
-    if "OPENAI_API_BASE" in os.environ:
-        assert "llama" in model.lower()
 
     response = client.chat.completions.create(
         model=model,

@@ -179,7 +179,7 @@ def config() -> argparse.Namespace:
     parser.add_argument("--branching_factor", type=int, default=5, help="Branching factor at each step for the search agent.")
     parser.add_argument("--search_algo", type=str, default="vf", help="Search algorithm to use", choices=["vf", "bfs", "dfs"])
     parser.add_argument("--vf_budget", type=int, default=20, help="Budget for the number of value function evaluations.")
-    parser.add_argument("--value_function", type=str, default="gpt4o", help="What value function to use.", choices=["gpt4o"])
+    parser.add_argument("--value_function", type=str, default="gpt4o", help="What value function to use.", choices=["gpt4o", "local"])
 
     # example config
     parser.add_argument("--test_idx", type=str, default=None, help="Idx to test")
@@ -469,6 +469,13 @@ def test(
                                     current_url=env.page.url, last_reasoning=a["raw_prediction"],
                                     intent=intent, models=["gpt-4o-2024-05-13"],
                                     intent_images=images if len(images) > 0 else None)
+                            elif args.value_function == "local":
+                                # Use the model specified via --model for local value function
+                                score = value_function.evaluate_success(
+                                    screenshots=last_screenshots[-(args.max_depth+1):] + [obs_img], actions=temp_action_history,
+                                    current_url=env.page.url, last_reasoning=a["raw_prediction"],
+                                    intent=intent, models=[args.model],
+                                    intent_images=images if len(images) > 0 else None)
                             else:
                                 raise NotImplementedError(f"Value function {args.value_function} not implemented")
                         except Exception as e:
@@ -502,6 +509,7 @@ def test(
                         # The second if statement checks that for scores < 1 that are tied, we should take the one that doesn't terminate.
                         if (best_score is None) or (score > best_score):
                             best_score, best_actions = score, actions
+                            print(f"  [★] New best score: {score:.2f}", flush=True)
                     
                     max_depth = args.max_depth  # Lookahead of trajectories of length (max_depth + 1)
                     action_queue = []  # Store tuple of (score, a_idx, action, trajectory, depth, ...)
@@ -529,6 +537,7 @@ def test(
                         search_counter += 1
                         next_action = curr_actions[-1]
                         actions_at_depth[curr_depth] += 1
+                        print(f"\n[Search {search_counter}/{args.vf_budget}] depth={curr_depth}, queue_size={len(action_queue)}", flush=True)
                         assert len(curr_actions) == curr_depth + 1, f"(depth+1) should be equal to the number of actions taken, but got {len(curr_actions)} and {curr_depth+1}"
 
                         if next_action["action_type"] == ActionTypes.NONE:
@@ -557,6 +566,9 @@ def test(
                                 depth=curr_depth, branching_factor=branching_factor, a_idx=a_idx, curr_a_idx=curr_a_idx)
                             raw_pred = next_action['raw_prediction'].split('\n')[-1]
                             all_candidates.append(f'a_idx={a_idx},curr_a_idx={curr_a_idx},depth={curr_depth}: {next_action["raw_prediction"]} (score: {score}, time: {time.time() - start_time})')
+                            # Print real-time score logging
+                            score_emoji = "✓" if score == 1.0 else ("→" if score == 0.5 else "✗")
+                            print(f"  [{score_emoji}] Score: {score:.2f} | depth={curr_depth} | {raw_pred[:80]}", flush=True)
                             maybe_update_best_action(score, curr_actions)
                             # Try for next action (if allowed)
                             if score == 1:
@@ -612,6 +624,7 @@ def test(
                     meta_data["action_history"].append(action_str)
 
                     if action["action_type"] == ActionTypes.STOP:
+                        print(f"  [🏁] STOP action issued! Answer: {action.get('answer', 'N/A')}", flush=True)
                         stop_trajectory = True
                         break
 

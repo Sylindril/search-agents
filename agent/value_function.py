@@ -10,7 +10,11 @@ from PIL import Image
 import requests
 import re
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+# Initialize OpenAI client - use OPENAI_API_BASE if set (for local models like OpenCUA)
+if "OPENAI_API_BASE" in os.environ:
+    client = OpenAI(api_key="EMPTY", base_url=os.environ["OPENAI_API_BASE"])
+else:
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 
 def evaluate_success(screenshots: list[Image.Image], actions: list[str], current_url: str, last_reasoning: str,
